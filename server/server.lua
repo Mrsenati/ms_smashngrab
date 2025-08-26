@@ -4,40 +4,36 @@ local config = require '/config/server'
 RegisterNetEvent('ms_smashngrab:registerVehicle', function(netVehId, class)
     if VehicleLoot[netVehId] then return end
     VehicleLoot[netVehId] = {}
-    print('class', class)
-    local validSpots = {}
-    for i, spot in ipairs(config.VehicleLootSpots) do
-        if not spot.class or spot.class == class then
-            table.insert(validSpots, {index = i, data = spot})
+
+    for i = 1, #config.VehicleLootSpots do
+        local spot = config.VehicleLootSpots[i]
+
+        if spot.class == class then
+            local chosenLoot = nil  -- reset per spot
+            local chance = math.random(100)
+
+            for j = 1, #spot.lootTable do
+                local loot = spot.lootTable[j]
+
+                if chance <= loot.chance then
+                    chosenLoot = {
+                        model = loot.model,
+                        offset = loot.offset,
+                        rotation = loot.rotation,
+                        item = loot.item,
+                        amount = loot.amount or {1,1},
+                        taken = false
+                    }
+                    break -- stop bij de eerste match, voorkomt meerdere items per spot
+                end
+            end
+
+            if chosenLoot then
+                VehicleLoot[netVehId][i] = chosenLoot
+                TriggerClientEvent('ms_smashngrab:spawnLootObject', -1, netVehId, i, chosenLoot, spot)
+                print(("✅ Loot spawned for Veh %s | Spot %s | Model %s"):format(netVehId, i, chosenLoot.model))
+            end
         end
-    end
-
-
-    local chosen = validSpots[math.random(1, #validSpots)]
-    local spotIndex = chosen.index
-    local spot = chosen.data
-
-    local chosenLoot = nil
-    print(json.encode(chosen))
-    for _, loot in ipairs(spot.lootTable) do
-        -- print(class, json.encode(spot.carclass))
-        if not class == spot.carclass then return end
-        if math.random(100) <= loot.chance then
-            chosenLoot = {
-                model = loot.model,
-                offset = loot.offset,
-                rotation = loot.rotation,
-                item = loot.item,
-                amount = loot.amount or {1, 1},
-                taken = false
-            }
-            break
-        end
-    end
-
-    if chosenLoot then
-        VehicleLoot[netVehId][spotIndex] = chosenLoot
-        TriggerClientEvent('ms_smashngrab:spawnLootObject', -1, netVehId, spotIndex, chosenLoot, spot)
     end
 end)
 

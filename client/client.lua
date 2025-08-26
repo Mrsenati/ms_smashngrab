@@ -3,6 +3,7 @@ CreateThread(function()
     while true do
         local coords = GetEntityCoords(cache.ped)
         local veh = lib.getClosestVehicle(coords, 5, false)
+        print(GetVehicleClass(veh))
         if not IsEntityAMissionEntity(veh) and NetworkGetEntityIsNetworked(veh) then
             local netVehId = VehToNet(veh)
             local class = GetVehicleClass(veh)
@@ -19,14 +20,28 @@ local function objinteraction(netObjId, spotIndex, spot)
         name = NetId,
         distance = 5,
         canInteract = function(entity, distance, coords, name)
-            if not spot.window then return true  end
-            local vehicle = lib.getClosestVehicle(coords)
-            if vehicle ~= 0 then
-                if not IsVehicleWindowIntact(vehicle, 1) then
-                    return true
-                end
+            if not spot.window and not spot.door then
+                return true
             end
-            
+
+            local vehicle = lib.getClosestVehicle(coords)
+            if vehicle == 0 then
+                return false
+            end
+
+            if spot.window ~= nil and not IsVehicleWindowIntact(vehicle, 1) then
+                return true
+            end
+
+            if spot.door ~= nil and GetVehicleDoorAngleRatio(vehicle, spot.door) >= 0.1 then
+                return true
+            end
+
+            if spot.trunk ~= nil and GetVehicleDoorAngleRatio(vehicle, spot.door) >= 0.1 then
+                return true
+            end
+
+            return false
         end,
         onSelect = function(data) 
             local netObjId = NetworkGetNetworkIdFromEntity(data.entity)
