@@ -1,18 +1,18 @@
 
-CreateThread(function()
-    while true do
-        local coords = GetEntityCoords(cache.ped)
-        local veh = lib.getClosestVehicle(coords, 5, false)
-        print(GetVehicleClass(veh))
-        if not IsEntityAMissionEntity(veh) and NetworkGetEntityIsNetworked(veh) then
-            local netVehId = VehToNet(veh)
-            local class = GetVehicleClass(veh)
-            SetEntityAsMissionEntity(veh, true, true)
-            TriggerServerEvent('ms_smashngrab:registerVehicle', netVehId, class)
-        end
-        Wait(5000)
-    end
-end)
+-- CreateThread(function()
+--     while true do
+--         local coords = GetEntityCoords(cache.ped)
+--         local veh = lib.getClosestVehicle(coords, 5, false)
+--         -- print(GetVehicleClass(veh)) -- Debug: Uncomment for development
+--         if not IsEntityAMissionEntity(veh) and NetworkGetEntityIsNetworked(veh) then
+--             local netVehId = VehToNet(veh)
+--             local class = GetVehicleClass(veh)
+--             SetEntityAsMissionEntity(veh, true, true)
+--             TriggerServerEvent('var_smashngrab:registerVehicle', netVehId, class)
+--         end
+--         Wait(5000)
+--     end
+-- end)
 
 local function objinteraction(netObjId, spotIndex, spot)
       interact.addEntity(netObjId, {
@@ -47,13 +47,13 @@ local function objinteraction(netObjId, spotIndex, spot)
             local netObjId = NetworkGetNetworkIdFromEntity(data.entity)
             local vehicle = lib.getClosestVehicle(data.coords)
             local netVehId = VehToNet(vehicle)
-            TriggerServerEvent('ms_smashngrab:takeLoot', netVehId, netObjId, spotIndex)
+            TriggerServerEvent('var_smashngrab:takeLoot', netVehId, netObjId, spotIndex)
         end
     })
 end
 
 
-RegisterNetEvent('ms_smashngrab:spawnLootObject', function(netVehId, spotIndex, chosenLoot, spot)
+RegisterNetEvent('var_smashngrab:spawnLootObject', function(netVehId, spotIndex, chosenLoot, spot)
     local veh = NetToVeh(netVehId)
     if not DoesEntityExist(veh) then return end
     lib.requestModel(chosenLoot.model)
@@ -71,11 +71,11 @@ RegisterNetEvent('ms_smashngrab:spawnLootObject', function(netVehId, spotIndex, 
         chosenLoot.rotation.x, chosenLoot.rotation.y, chosenLoot.rotation.z,
         true, true, false, true, 1, true
     )
-    TriggerServerEvent('ms_smashngrab:registerObject', netVehId, spotIndex, netObjId)
+    TriggerServerEvent('var_smashngrab:registerObject', netVehId, spotIndex, netObjId)
 end)
 
 
-RegisterNetEvent('ms_smashngrab:removeLootObject', function(netVehId, netObjId)
+RegisterNetEvent('var_smashngrab:removeLootObject', function(netVehId, netObjId)
     local obj = NetToObj(netObjId)
     NetworkRequestControlOfEntity(obj)
     DeleteEntity(obj)
@@ -84,3 +84,10 @@ RegisterNetEvent('ms_smashngrab:removeLootObject', function(netVehId, netObjId)
     -- DeleteVehicle(veh)
 end)
 
+lib.callback.register('var_smashngrab:getvehclass', function(netVehId)
+    local veh = NetToVeh(netVehId)
+    local isveh = IsEntityAVehicle(veh)
+    local class = GetVehicleClass(veh)
+    print(class)
+    return class
+end)
